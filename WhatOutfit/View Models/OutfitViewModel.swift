@@ -1,21 +1,21 @@
-// Import required frameworks
-import SwiftUI     // Framework for building user interfaces in Swift
-import Combine     // Framework for handling asynchronous events and data streams (similar to Python's asyncio)
+import SwiftUI
+import Combine
 
-// Main view model class for managing outfit data
-// ObservableObject is similar to a Python class that can notify observers of changes
 class OutfitViewModel: ObservableObject {
-    @Published var outfits: [Outfit] = []
+    @Published var personalOutfits: [Outfit] = []
+    @Published var globalOutfits: [Outfit] = []
     @Published var selectedOutfit: Outfit?
     @Published var isLoading = false
     @Published var error: String?
-    @Published var hasMoreContent = true
     
-    private var currentPage = 1
+    // Separate state for each feed
+    private var personalCurrentPage = 1
+    private var globalCurrentPage = 1
+    private var personalHasMore = true
+    private var globalHasMore = true
     private let itemsPerPage = 10
     private var cancellables = Set<AnyCancellable>()
     
-    // Structure to match API response
     private struct OutfitResponse: Codable {
         let outfits: [Outfit]
         let has_more: Bool
@@ -25,17 +25,16 @@ class OutfitViewModel: ObservableObject {
         guard !isLoading else { return }
         
         if loadMore {
-            guard hasMoreContent else { return }
+            guard globalHasMore else { return }
         } else {
-            currentPage = 1
-            outfits = []
+            globalCurrentPage = 1
+            globalOutfits = []
         }
         
         isLoading = true
-        print("Loading global page \(currentPage)")
+        print("Loading global page \(globalCurrentPage)")
         
-        // Make sure to use the correct endpoint
-        let urlString = "https://access.wha7.com/api/data_all?page=\(currentPage)&per_page=\(itemsPerPage)"
+        let urlString = "https://access.wha7.com/api/data_all?page=\(globalCurrentPage)&per_page=\(itemsPerPage)"
         guard let url = URL(string: urlString) else {
             error = "Invalid URL"
             isLoading = false
@@ -62,13 +61,13 @@ class OutfitViewModel: ObservableObject {
                 guard let self = self else { return }
                 
                 if loadMore {
-                    self.outfits.append(contentsOf: response.outfits)
+                    self.globalOutfits.append(contentsOf: response.outfits)
                 } else {
-                    self.outfits = response.outfits
+                    self.globalOutfits = response.outfits
                 }
                 
-                self.hasMoreContent = response.has_more
-                self.currentPage += 1
+                self.globalHasMore = response.has_more
+                self.globalCurrentPage += 1
                 print("Loaded \(response.outfits.count) global outfits, hasMore: \(response.has_more)")
             }
             .store(in: &cancellables)
@@ -78,14 +77,14 @@ class OutfitViewModel: ObservableObject {
         guard !isLoading else { return }
         
         if loadMore {
-            guard hasMoreContent else { return }
+            guard personalHasMore else { return }
         } else {
-            currentPage = 1
-            outfits = []
+            personalCurrentPage = 1
+            personalOutfits = []
         }
         
         isLoading = true
-        print("Loading personal page \(currentPage)")
+        print("Loading personal page \(personalCurrentPage)")
         
         guard let encodedPhone = phoneNumber.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
             error = "Invalid phone number encoding"
@@ -93,7 +92,7 @@ class OutfitViewModel: ObservableObject {
             return
         }
         
-        let urlString = "https://access.wha7.com/api/data?phone_number=\(encodedPhone)&page=\(currentPage)&per_page=\(itemsPerPage)"
+        let urlString = "https://access.wha7.com/api/data?phone_number=\(encodedPhone)&page=\(personalCurrentPage)&per_page=\(itemsPerPage)"
         guard let url = URL(string: urlString) else {
             error = "Invalid URL"
             isLoading = false
@@ -120,21 +119,18 @@ class OutfitViewModel: ObservableObject {
                 guard let self = self else { return }
                 
                 if loadMore {
-                    self.outfits.append(contentsOf: response.outfits)
+                    self.personalOutfits.append(contentsOf: response.outfits)
                 } else {
-                    self.outfits = response.outfits
+                    self.personalOutfits = response.outfits
                 }
                 
-                self.hasMoreContent = response.has_more
-                self.currentPage += 1
+                self.personalHasMore = response.has_more
+                self.personalCurrentPage += 1
                 print("Loaded \(response.outfits.count) personal outfits, hasMore: \(response.has_more)")
             }
             .store(in: &cancellables)
     }
-
-
     
-    // Function to load items for a specific outfit
     func loadOutfitItems(outfitId: Int) {
         guard let url = URL(string: "https://access.wha7.com/api/items?outfit_id=\(outfitId)") else {
             return
@@ -142,7 +138,6 @@ class OutfitViewModel: ObservableObject {
         
         print("Loading items for outfit: \(outfitId)")
         
-        // Similar pattern to other load functions but updates selectedOutfit
         URLSession.shared.dataTaskPublisher(for: url)
             .map(\.data)
             .decode(type: [item].self, decoder: JSONDecoder())
@@ -153,7 +148,6 @@ class OutfitViewModel: ObservableObject {
                 }
             } receiveValue: { [weak self] items in
                 print("Received items: \(items.count)")
-                // Update selected outfit with loaded items
                 if let currentOutfit = self?.selectedOutfit {
                     self?.selectedOutfit = Outfit(
                         id: currentOutfit.id,
@@ -165,5 +159,4 @@ class OutfitViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-
 }

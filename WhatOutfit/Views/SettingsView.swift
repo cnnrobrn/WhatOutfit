@@ -12,31 +12,35 @@ struct SettingsView: View {
     @Binding var isAuthenticated: Bool
     
     var body: some View {
-        NavigationView {
-            List {
-                Section(header: Text("Account Information")) {
-                    HStack {
-                        Text("Phone Number")
-                        Spacer()
-                        Text(userSettings.phoneNumber)
-                            .foregroundColor(.gray)
-                    }
-                }
-                
-                Section {
-                    Button(action: {
-                        userSettings.clearPhoneNumber()
-                        isAuthenticated = false
-                    }) {
+        VStack(spacing: 0) {
+            WhatOutfitHeader()
+                .background(Color(.systemBackground))
+            NavigationView {
+                List {
+                    Section(header: Text("Account Information")) {
                         HStack {
-                            Text("Log Out")
-                                .foregroundColor(.red)
+                            Text("Phone Number")
                             Spacer()
+                            Text(userSettings.phoneNumber)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    
+                    Section {
+                        Button(action: {
+                            userSettings.clearPhoneNumber()
+                            isAuthenticated = false
+                        }) {
+                            HStack {
+                                Text("Log Out")
+                                    .foregroundColor(.red)
+                                Spacer()
+                            }
                         }
                     }
                 }
+                .navigationTitle("Settings")
             }
-            .navigationTitle("Settings")
         }
     }
 }

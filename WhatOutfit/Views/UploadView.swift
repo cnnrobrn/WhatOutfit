@@ -95,48 +95,52 @@ struct UploadView: View {
         }
     }
     var body: some View {
-        NavigationView {
-            VStack {
-                if isUploading {
-                    ProgressView("Analyzing image...")
-                } else {
-                    PhotosPicker(selection: $selectedItem,
-                                 matching: .images) {
-                        VStack(spacing: 12) {
-                            Image(systemName: "plus.circle.fill")
-                                .resizable()
-                                .frame(width: 64, height: 64)
-                                .foregroundColor(.blue)
-                            
-                            Text("Upload Photo")
-                                .font(.headline)
-                            
-                            Text("Share an outfit you'd like analyzed")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+        VStack(spacing: 0) {
+            WhatOutfitHeader()
+                .background(Color(.systemBackground))
+            NavigationView {
+                VStack {
+                    if isUploading {
+                        ProgressView("Analyzing image...")
+                    } else {
+                        PhotosPicker(selection: $selectedItem,
+                                     matching: .images) {
+                            VStack(spacing: 12) {
+                                Image(systemName: "plus.circle.fill")
+                                    .resizable()
+                                    .frame(width: 64, height: 64)
+                                    .foregroundColor(.blue)
+                                
+                                Text("Upload Photo")
+                                    .font(.headline)
+                                
+                                Text("Share an outfit you'd like analyzed")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color(.systemBackground))
+                            .cornerRadius(12)
+                            .padding()
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .padding()
                     }
                 }
-            }
-            .navigationTitle("Upload Outfit")
-            .onChange(of: selectedItem) { _, item in
-                if let item = item {
-                    uploadImage(item)
+                .navigationTitle("Upload Outfit")
+                .onChange(of: selectedItem) { _, item in
+                    if let item = item {
+                        uploadImage(item)
+                    }
                 }
-            }
-            .alert("Upload Error", isPresented: $showingError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage)
-            }
-            .alert("Upload Successful", isPresented: $showingSuccess) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("Your item has been uploaded successfully. Please navigate to the \"Your Outfits\" tab and refresh.")
+                .alert("Upload Error", isPresented: $showingError) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text(errorMessage)
+                }
+                .alert("Upload Successful", isPresented: $showingSuccess) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text("Your item has been uploaded successfully. Please navigate to the \"Your Outfits\" tab and refresh.")
+                }
             }
         }
     }

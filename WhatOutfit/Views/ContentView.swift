@@ -33,17 +33,23 @@ struct ContentView: View {
                     }
                     .tag(1)
                 
-                UploadView(phoneNumber: phoneNumber)  // Pass phone number here
+                ConsultantView()
+                    .tabItem {
+                        Label("Consultant", systemImage: "bubble.left.and.bubble.right.fill")
+                    }
+                    .tag(2)
+                
+                UploadView(phoneNumber: phoneNumber)
                     .tabItem {
                         Label("Upload", systemImage: "plus.circle.fill")
                     }
-                    .tag(2)
+                    .tag(3)
                 
                 SettingsView(isAuthenticated: $isAuthenticated)
                     .tabItem {
                         Label("Settings", systemImage: "gear")
                     }
-                    .tag(3)
+                    .tag(4)
             }
             .sheet(item: $viewModel.selectedOutfit) { outfit in
                 OutfitDetailView(outfit: outfit)

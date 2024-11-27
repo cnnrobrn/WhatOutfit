@@ -7,33 +7,37 @@ struct PersonalFeedView: View {
     let phoneNumber: String
     
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                ForEach(viewModel.outfits.indices, id: \.self) { index in
-                    OutfitCard(outfit: viewModel.outfits[index]) {
-                        viewModel.selectedOutfit = viewModel.outfits[index]
-                    }
-                    .onAppear {
-                        if index == viewModel.outfits.count - 2 && !viewModel.isLoading {
-                            viewModel.loadPersonalOutfits(phoneNumber: phoneNumber, loadMore: true)
+        VStack(spacing: 0) {
+            WhatOutfitHeader()
+                .background(Color(.systemBackground))
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    ForEach(viewModel.personalOutfits.indices, id: \.self) { index in
+                        OutfitCard(outfit: viewModel.personalOutfits[index]) {
+                            viewModel.selectedOutfit = viewModel.personalOutfits[index]
+                        }
+                        .onAppear {
+                            if index == viewModel.personalOutfits.count - 1 && !viewModel.isLoading {
+                                viewModel.loadPersonalOutfits(phoneNumber: phoneNumber, loadMore: true)
+                            }
                         }
                     }
+                    
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                    }
                 }
-                
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                }
+                .padding(.vertical)
             }
-            .padding(.vertical)
-        }
-        .refreshable {
-            viewModel.loadPersonalOutfits(phoneNumber: phoneNumber)
-        }
-        .onAppear {
-            if viewModel.outfits.isEmpty {
+            .refreshable {
                 viewModel.loadPersonalOutfits(phoneNumber: phoneNumber)
+            }
+            .onAppear {
+                if viewModel.personalOutfits.isEmpty {
+                    viewModel.loadPersonalOutfits(phoneNumber: phoneNumber)
+                }
             }
         }
     }
