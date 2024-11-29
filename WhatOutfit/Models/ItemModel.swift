@@ -1,21 +1,13 @@
-//
-//  ItemModel.swift
-//  WhatOutfit
-//
-//  Created by Connor O'Brien on 11/24/24.
-//
-
 import Foundation
-
-
 
 struct item: Identifiable, Codable, Hashable {
     var id: Int { itemId } // Computed property for Identifiable conformance
-    let itemId: Int
+    var itemId: Int  // Changed from 'let' to 'var'
     let outfitId: Int
     let description: String
     var links: [ProductLink]?
     let timestamp: Date?
+    let searchQuery: String?
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(itemId)
@@ -31,5 +23,6 @@ struct item: Identifiable, Codable, Hashable {
         case description
         case links
         case timestamp
+        case searchQuery = "search_query"
     }
 }

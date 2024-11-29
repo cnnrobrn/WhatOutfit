@@ -9,6 +9,7 @@ import SwiftUI
 // Update ContentView to pass phone number
 struct ContentView: View {
     @StateObject private var viewModel = OutfitViewModel()
+    @StateObject private var activationManager = ActivationManager()
     @State private var phoneNumber: String = ""
     @EnvironmentObject var userSettings: UserSettings
     @State private var isAuthenticated: Bool = false
@@ -17,8 +18,13 @@ struct ContentView: View {
     var body: some View {
         if !isAuthenticated {
             LoginView(phoneNumber: $phoneNumber) { success in
+                if success {
+                    activationManager.checkActivation(phoneNumber: phoneNumber)
+                }
                 isAuthenticated = success
             }
+        } else if !activationManager.isActivated {
+            ActivationView(phoneNumber: phoneNumber)
         } else {
             TabView(selection: $selectedTab) {
                 PersonalFeedView(viewModel: viewModel, phoneNumber: phoneNumber)
@@ -57,3 +63,4 @@ struct ContentView: View {
         }
     }
 }
+

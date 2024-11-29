@@ -9,7 +9,9 @@ import PhotosUI
 
 struct ConsultantView: View {
     @StateObject private var viewModel = ConsultantViewModel()
+    @State private var showingMediaOptions = false
     @State private var showingImagePicker = false
+    @State private var showingCamera = false
     @State private var selectedItem: PhotosPickerItem?
     
     var body: some View {
@@ -38,9 +40,10 @@ struct ConsultantView: View {
                 Divider()
                 
                 HStack(spacing: 12) {
-                    PhotosPicker(selection: $selectedItem,
-                               matching: .images) {
-                        Image(systemName: "photo")
+                    Button(action: {
+                        showingMediaOptions = true
+                    }) {
+                        Image(systemName: "camera")
                             .font(.system(size: 24))
                             .foregroundColor(.blue)
                     }
@@ -61,6 +64,29 @@ struct ConsultantView: View {
                 .padding()
             }
         }
+        .confirmationDialog("Choose Image Source", isPresented: $showingMediaOptions) {
+            Button("Take Photo") {
+                showingCamera = true
+            }
+            Button("Choose from Library") {
+                showingImagePicker = true
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .sheet(isPresented: $showingCamera) {
+            CameraView(image: Binding(
+                get: { viewModel.selectedImage },
+                set: { newImage in
+                    if let image = newImage {
+                        viewModel.sendMessage("I'd like advice about this outfit:", image: image)
+                    }
+                    viewModel.selectedImage = newImage
+                }
+            ))
+        }
+        .photosPicker(isPresented: $showingImagePicker,
+                     selection: $selectedItem,
+                     matching: .images)
         .onChange(of: selectedItem) { _, item in
             if let item = item {
                 Task {

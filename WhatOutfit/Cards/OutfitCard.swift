@@ -12,6 +12,12 @@ struct OutfitCard: View {
     @State private var isLoading = true
     @State private var imageHeight: CGFloat = 400 // Default height
     
+    private func calculateImageHeight(from image: UIImage) -> CGFloat {
+        let screenWidth = UIScreen.main.bounds.width - 32
+        let aspectRatio = image.size.height / image.size.width
+        return screenWidth * aspectRatio
+    }
+    
     private func decodeImage(from base64String: String) -> UIImage? {
         let cleanedString = base64String
             .replacingOccurrences(of: "data:image/jpeg;base64,", with: "")
@@ -22,11 +28,6 @@ struct OutfitCard: View {
               let image = UIImage(data: imageData) else {
             return nil
         }
-        
-        // Calculate height based on image aspect ratio and screen width
-        let screenWidth = UIScreen.main.bounds.width - 32 // Account for horizontal padding
-        let aspectRatio = image.size.height / image.size.width
-        imageHeight = screenWidth * aspectRatio
         
         return image
     }
@@ -49,7 +50,10 @@ struct OutfitCard: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: imageHeight)
                             .clipped()
-                            .onAppear { isLoading = false }
+                            .onAppear {
+                                imageHeight = calculateImageHeight(from: image)
+                                isLoading = false
+                            }
                     } else if imageLoadError {
                         VStack {
                             Image(systemName: "photo.fill")

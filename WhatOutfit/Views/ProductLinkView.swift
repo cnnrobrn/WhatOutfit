@@ -13,47 +13,83 @@ struct ProductLinkView: View {
     @State private var image: UIImage?
     
     var body: some View {
-        Link(destination: URL(string: link.url) ?? URL(string: "https://www.google.com")!) {
-            VStack(alignment: .leading, spacing: 8) {
-                if let image = image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 150, height: 150)
-                        .clipped()
-                        .cornerRadius(8)
-                } else {
-                    ProgressView()
-                        .frame(width: 150, height: 150)
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(8)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(link.merchantName)
+        VStack(alignment: .leading, spacing: 8) {
+            if let image = image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 150, height: 150)
+                    .clipped()
+                    .cornerRadius(8)
+            } else {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.1))
+                    .frame(width: 150, height: 150)
+                    .cornerRadius(8)
+                    .overlay(
+                        ProgressView()
+                    )
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                if let merchantName = link.merchantName {
+                    Text(merchantName)
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
-                    Text(link.title)
+                }
+                
+                if let title = link.title {
+                    Text(title)
                         .font(.caption)
+                        .foregroundColor(.primary)
                         .lineLimit(2)
-                    
-                    Text(link.price)
+                }
+                
+                // Rating and Reviews
+                if let rating = link.rating {
+                    HStack(alignment: .center, spacing: 4) {
+                        StarRatingView(rating: rating)
+                        if let reviewCount = link.reviewsCount {
+                            Text("(\(reviewCount))")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
+                if let price = link.price {
+                    Text(price)
                         .font(.caption)
+                        .foregroundColor(.primary)
                         .bold()
                 }
-                .frame(width: 150)
             }
+            .frame(width: 150)
         }
-        .buttonStyle(PlainButtonStyle())
         .onAppear {
-            // Decode image on appear
-            if image == nil {
-                DispatchQueue.global(qos: .background).async {
-                    let decodedImage = link.decodeImage()
+            loadImage()
+        }
+    }
+    
+    private func loadImage() {
+        if let photoUrl = link.photoUrl {
+            let cleanedString = photoUrl
+                .replacingOccurrences(of: "data:image/jpeg;base64,", with: "")
+                .replacingOccurrences(of: "data:image/png;base64,", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            guard let imageData = Data(base64Encoded: cleanedString) else {
+                print("Failed to decode base64 string to Data for item: \(link.title ?? "unknown")")
+                return
+            }
+            
+            DispatchQueue.global(qos: .background).async {
+                if let uiImage = UIImage(data: imageData) {
                     DispatchQueue.main.async {
-                        self.image = decodedImage
+                        self.image = uiImage
                     }
+                } else {
+                    print("Failed to create UIImage from Data for item: \(link.title ?? "unknown")")
                 }
             }
         }

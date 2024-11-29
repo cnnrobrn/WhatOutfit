@@ -13,18 +13,26 @@ struct ItemCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(item.description)
                 .font(.headline)
+                .foregroundColor(.primary)  // Explicitly set to primary color
                 .padding(.horizontal)
             
-            if let links = item.links {
+            if let links = item.links, !links.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 15) {
                         ForEach(links) { link in
-                            ProductLinkView(link: link)
-                                .frame(height: 220) // Fixed height for consistency
+                            Link(destination: link.cleanURL()) {
+                                ProductLinkView(link: link)
+                                    .frame(height: 220)
+                            }
+                            .buttonStyle(PlainButtonStyle())  // Remove default link styling
                         }
                     }
                     .padding(.horizontal)
                 }
+            } else {
+                Text("Loading products...")
+                    .foregroundColor(.secondary)
+                    .padding()
             }
         }
         .padding(.vertical)
@@ -33,3 +41,4 @@ struct ItemCard: View {
         .shadow(radius: 2)
     }
 }
+
