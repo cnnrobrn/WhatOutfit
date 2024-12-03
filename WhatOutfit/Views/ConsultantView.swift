@@ -15,8 +15,10 @@ struct ConsultantView: View {
     @State private var selectedItem: PhotosPickerItem?
     
     var body: some View {
-        VStack(spacing: 0) {
-            WhatOutfitHeader(title: "Consultant")
+           VStack(spacing: 0) {
+               WhatOutfitHeader(title: "Consultant")
+               
+               ScrollingBanner(text: "🎉 New Feature: Connect your Instagram in Settings to send posts directly to the Wha7_Outfit Instagram. Responses are displayed in the Wha7 app! 🎉")
             
             ScrollViewReader { proxy in
                 ScrollView {

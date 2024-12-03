@@ -7,6 +7,7 @@ struct GlobalFeedView: View {
         VStack(spacing: 0) {
             WhatOutfitHeader()
                 .background(Color(.systemBackground))
+            ScrollingBanner(text: "🎉 Connect your Instagram to send posts directly to the Wha7_Outfit Instagram. Responses are displayed in app! 🎉")
             ScrollView {
                 LazyVStack(spacing: 16) {
                     ForEach(viewModel.globalOutfits.indices, id: \.self) { index in
