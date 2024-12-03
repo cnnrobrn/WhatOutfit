@@ -4,6 +4,7 @@ import SwiftUI
 // Updated PersonalFeedView.swift
 struct PersonalFeedView: View {
     @ObservedObject var viewModel: OutfitViewModel
+    @EnvironmentObject var userSettings: UserSettings
     let phoneNumber: String
     
     var body: some View {
@@ -18,7 +19,11 @@ struct PersonalFeedView: View {
                         }
                         .onAppear {
                             if index == viewModel.personalOutfits.count - 1 && !viewModel.isLoading {
-                                viewModel.loadPersonalOutfits(phoneNumber: phoneNumber, loadMore: true)
+                                viewModel.loadPersonalOutfits(
+                                    phoneNumber: phoneNumber,
+                                    instagramUsername: userSettings.instagramUsername,
+                                    loadMore: true
+                                )
                             }
                         }
                     }
@@ -32,11 +37,17 @@ struct PersonalFeedView: View {
                 .padding(.vertical)
             }
             .refreshable {
-                viewModel.loadPersonalOutfits(phoneNumber: phoneNumber)
+                viewModel.loadPersonalOutfits(
+                    phoneNumber: phoneNumber,
+                    instagramUsername: userSettings.instagramUsername
+                )
             }
             .onAppear {
                 if viewModel.personalOutfits.isEmpty {
-                    viewModel.loadPersonalOutfits(phoneNumber: phoneNumber)
+                    viewModel.loadPersonalOutfits(
+                        phoneNumber: phoneNumber,
+                        instagramUsername: userSettings.instagramUsername
+                    )
                 }
             }
         }

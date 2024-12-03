@@ -12,13 +12,15 @@ struct LoginView: View {
     @Binding var phoneNumber: String
     let onComplete: (Bool) -> Void
     @State private var showError = false
-    @StateObject private var userSettings = UserSettings()
+    @EnvironmentObject private var userSettings: UserSettings
     
     var body: some View {
         VStack(spacing: 20) {
-            Text("What Outfit")
-                .font(.largeTitle)
-                .fontWeight(.light)
+            Image("Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 50)
+                .padding(.bottom, 20)
             
             TextField("Phone Number", text: $phoneNumber)
                 .textFieldStyle(.roundedBorder)
@@ -35,8 +37,8 @@ struct LoginView: View {
             Button("OK", role: .cancel) { }
         }
         .onAppear {
-            // Check if we have a stored phone number
-            if userSettings.isAuthenticated() {
+            // Check if phone number exists and isn't empty
+            if !userSettings.phoneNumber.isEmpty {
                 phoneNumber = userSettings.phoneNumber
                 onComplete(true)
             }

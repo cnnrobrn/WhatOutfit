@@ -11,124 +11,86 @@ import PhotosUI
 
 struct UploadView: View {
     let phoneNumber: String
-    @State private var selectedItem: PhotosPickerItem?
-    @State private var isUploading = false
+    @State private var selectedItems: [PhotosPickerItem] = []
     @State private var showingError = false
     @State private var errorMessage = ""
-    @State private var showingSuccess = false  // New state for success alert
+    @State private var showingSuccess = false
+    @StateObject private var uploadManager = UploadManager.shared
     
-    
-    private func uploadImage(_ item: PhotosPickerItem) {
-        isUploading = true
-        print("Starting upload process...")
-        
-        Task {
-            do {
-                // Load image data
-                print("Loading image data...")
-                guard let data = try await item.loadTransferable(type: Data.self) else {
-                    print("Failed to load image data")
-                    throw URLError(.badServerResponse)
-                }
-                print("Image data loaded successfully, size: \(data.count) bytes")
-                
-                // Create request
-                let urlString = "https://app.wha7.com/ios"
-                guard let url = URL(string: urlString) else {
-                    throw URLError(.badURL)
-                }
-                
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                
-                // Create base64 string with prefix
-                let base64String = data.base64EncodedString()
-                
-                // Create request body
-                let bodyData: [String: String] = [
-                    "image_content": base64String,
-                    "from_number": phoneNumber
-                ]
-                
-                // Convert to JSON data
-                let jsonData = try JSONSerialization.data(withJSONObject: bodyData)
-                request.httpBody = jsonData
-                
-                print("Sending request to: \(urlString)")
-                print("With phone number: \(phoneNumber)")
-                
-                let (responseData, response) = try await URLSession.shared.data(for: request)
-                
-                // Debug response
-                if let responseString = String(data: responseData, encoding: .utf8) {
-                    print("Response: \(responseString)")
-                }
-                
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    throw URLError(.badServerResponse)
-                }
-                
-                print("Response status code: \(httpResponse.statusCode)")
-                
-                if httpResponse.statusCode == 200 {
-                    print("Upload successful")
-                    await MainActor.run {
-                        isUploading = false
-                        selectedItem = nil
-                        showingSuccess = true  // Show success alert
-                    }
-                } else {
-                    print("Server returned error status: \(httpResponse.statusCode)")
-                    throw URLError(.badServerResponse)
-                }
-                
-            } catch {
-                print("Upload failed with error: \(error)")
-                print("Error description: \(error.localizedDescription)")
-                await MainActor.run {
-                    isUploading = false
-                    errorMessage = "Upload failed: \(error.localizedDescription)"
-                    showingError = true
-                }
-            }
-        }
-    }
     var body: some View {
         VStack(spacing: 0) {
             WhatOutfitHeader()
                 .background(Color(.systemBackground))
+            
             NavigationView {
                 VStack {
-                    if isUploading {
-                        ProgressView("Analyzing image...")
-                    } else {
-                        PhotosPicker(selection: $selectedItem,
-                                     matching: .images) {
-                            VStack(spacing: 12) {
-                                Image(systemName: "plus.circle.fill")
-                                    .resizable()
-                                    .frame(width: 64, height: 64)
-                                    .foregroundColor(.blue)
-                                
-                                Text("Upload Photo")
-                                    .font(.headline)
-                                
-                                Text("Share an outfit you'd like analyzed")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color(.systemBackground))
-                            .cornerRadius(12)
-                            .padding()
+                    PhotosPicker(selection: $selectedItems,
+                               matching: .images,
+                               photoLibrary: .shared()) {
+                        VStack(spacing: 16) {
+                            Image(systemName: "square.and.arrow.up.circle.fill")
+                                .resizable()
+                                .frame(width: 72, height: 72)
+                                .foregroundColor(.blue)
+                            
+                            Text("Upload Photos")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                            
+                            Text("Select multiple outfits to analyze\nUploads will continue in the background")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
                         }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.blue.opacity(0.2), lineWidth: 2)
+                                .background(Color(.systemBackground))
+                        )
+                        .padding()
+                    }
+                    
+                    if !uploadManager.uploadStatuses.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(uploadManager.uploadStatuses.sorted(by: { $0.orderNumber < $1.orderNumber })) { status in
+                                HStack {
+                                    if status.isComplete {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.green)
+                                    } else {
+                                        ProgressView()
+                                            .frame(width: 16, height: 16)
+                                    }
+                                    Text("Image \(status.orderNumber)")
+                                        .foregroundColor(status.isComplete ? .secondary : .primary)
+                                    Spacer()
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+                        .padding(.vertical)
                     }
                 }
-                .navigationTitle("Upload Outfit")
-                .onChange(of: selectedItem) { _, item in
-                    if let item = item {
-                        uploadImage(item)
+                .navigationTitle("Upload Outfits")
+                .onChange(of: selectedItems) { _, items in
+                    Task {
+                        // Clear previous uploads if any
+                        uploadManager.uploadStatuses.removeAll()
+                        uploadManager.successCount = 0
+                        
+                        // Create new upload statuses with order numbers
+                        for (index, item) in items.enumerated() {
+                            let status = UploadStatus(
+                                id: UUID(),
+                                item: item,
+                                orderNumber: index + 1
+                            )
+                            await MainActor.run {
+                                uploadManager.uploadStatuses.append(status)
+                            }
+                            await uploadManager.uploadImage(status: status, phoneNumber: phoneNumber)
+                        }
                     }
                 }
                 .alert("Upload Error", isPresented: $showingError) {
@@ -139,7 +101,7 @@ struct UploadView: View {
                 .alert("Upload Successful", isPresented: $showingSuccess) {
                     Button("OK", role: .cancel) { }
                 } message: {
-                    Text("Your item has been uploaded successfully. Please navigate to the \"Your Outfits\" tab and refresh.")
+                    Text("Your outfits have been uploaded successfully. Please navigate to the \"Your Outfits\" tab and refresh.")
                 }
             }
         }

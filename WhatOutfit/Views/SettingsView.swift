@@ -26,6 +26,8 @@ struct SettingsView: View {
                         }
                     }
                     
+                    InstagramLinkingSection()
+                    
                     Section {
                         Button(action: {
                             userSettings.clearPhoneNumber()
@@ -150,3 +152,4 @@ struct ShareSheet: UIViewControllerRepresentable {
     
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
+

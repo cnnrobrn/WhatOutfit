@@ -10,21 +10,25 @@ import SwiftUI
 class UserSettings: ObservableObject {
     @Published var phoneNumber: String {
         didSet {
-            UserDefaults.standard.set(phoneNumber, forKey: "userPhoneNumber")
+            UserDefaults.standard.set(phoneNumber, forKey: "phoneNumber")
+        }
+    }
+    
+    @Published var instagramUsername: String? {
+        didSet {
+            UserDefaults.standard.set(instagramUsername, forKey: "instagramUsername")
         }
     }
     
     init() {
-        // Load saved phone number on init, or empty string if none exists
-        self.phoneNumber = UserDefaults.standard.string(forKey: "userPhoneNumber") ?? ""
+        self.phoneNumber = UserDefaults.standard.string(forKey: "phoneNumber") ?? ""
+        self.instagramUsername = UserDefaults.standard.string(forKey: "instagramUsername")
     }
     
     func clearPhoneNumber() {
         phoneNumber = ""
-        UserDefaults.standard.removeObject(forKey: "userPhoneNumber")
-    }
-    
-    func isAuthenticated() -> Bool {
-        return !phoneNumber.isEmpty
+        instagramUsername = nil
+        UserDefaults.standard.removeObject(forKey: "phoneNumber")
+        UserDefaults.standard.removeObject(forKey: "instagramUsername")
     }
 }

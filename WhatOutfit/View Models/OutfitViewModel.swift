@@ -7,7 +7,11 @@ class OutfitViewModel: ObservableObject {
     @Published var selectedOutfit: Outfit?
     @Published var isLoading = false
     @Published var error: String?
-    
+    @Published var instagramUsername: String? {
+        didSet {
+            UserDefaults.standard.set(instagramUsername, forKey: "instagramUsername")
+        }
+    }
     // Separate state for each feed
     private var personalCurrentPage = 1
     private var globalCurrentPage = 1
@@ -73,7 +77,7 @@ class OutfitViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func loadPersonalOutfits(phoneNumber: String, loadMore: Bool = false) {
+    func loadPersonalOutfits(phoneNumber: String, instagramUsername: String? = nil, loadMore: Bool = false) {
         guard !isLoading else { return }
         
         if loadMore {
@@ -92,8 +96,20 @@ class OutfitViewModel: ObservableObject {
             return
         }
         
-        let urlString = "https://access.wha7.com/api/data?phone_number=\(encodedPhone)&page=\(personalCurrentPage)&per_page=\(itemsPerPage)"
-        guard let url = URL(string: urlString) else {
+        var urlComponents = URLComponents(string: "https://access.wha7.com/api/data")
+        var queryItems = [
+            URLQueryItem(name: "phone_number", value: encodedPhone),
+            URLQueryItem(name: "page", value: String(personalCurrentPage)),
+            URLQueryItem(name: "per_page", value: String(itemsPerPage))
+        ]
+        
+        if let username = instagramUsername {
+            queryItems.append(URLQueryItem(name: "instagram_username", value: username))
+        }
+        
+        urlComponents?.queryItems = queryItems
+        
+        guard let url = urlComponents?.url else {
             error = "Invalid URL"
             isLoading = false
             return
