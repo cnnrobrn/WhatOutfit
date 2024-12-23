@@ -8,7 +8,7 @@ struct WhatOutfitApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(userSettings)
+                .preferredColorScheme(.light)  // Add this line
         }
     }
 }
-
