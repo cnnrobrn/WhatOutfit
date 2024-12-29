@@ -1,36 +1,66 @@
-//
-//  ProductLinkView.swift
-//  WhatOutfit
-//
-//  Created by Connor O'Brien on 11/24/24.
-//
 
 import SwiftUI
 
-// Updated ProductLinkView
 struct ProductLinkView: View {
     let link: ProductLink
     @State private var image: UIImage?
+    @State private var showingTryOn = false
+    @State private var showingPremiumPrompt = false
+    @State private var isProcessingPurchase = false
+    @EnvironmentObject var userSettings: UserSettings
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let image = image {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 150, height: 150)
-                    .clipped()
-                    .cornerRadius(8)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.1))
-                    .frame(width: 150, height: 150)
-                    .cornerRadius(8)
-                    .overlay(
-                        ProgressView()
-                    )
+            // Image container with try-on button
+            ZStack {
+                if let image = image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 150, height: 150)
+                        .clipped()
+                        .cornerRadius(8)
+                    
+                    // Try-on button overlay
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                if userSettings.isPremium {
+                                    showingTryOn = true
+                                } else {
+                                    showingPremiumPrompt = true
+                                }
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "person.crop.rectangle.fill")
+                                    Text("Try On")
+                                        .font(.caption)
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.black.opacity(0.75))
+                                .cornerRadius(8)
+                            }
+                            .padding(8)
+                        }
+                        Spacer()
+                    }
+                } else {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.1))
+                        .frame(width: 150, height: 150)
+                        .cornerRadius(8)
+                        .overlay(
+                            ProgressView()
+                        )
+                }
             }
+            .frame(width: 150, height: 150)
             
+            // Product details
             VStack(alignment: .leading, spacing: 4) {
                 if let merchantName = link.merchantName {
                     Text(merchantName)
@@ -45,7 +75,6 @@ struct ProductLinkView: View {
                         .lineLimit(2)
                 }
                 
-                // Rating and Reviews
                 if let rating = link.rating {
                     HStack(alignment: .center, spacing: 4) {
                         StarRatingView(rating: rating)
@@ -68,6 +97,46 @@ struct ProductLinkView: View {
         }
         .onAppear {
             loadImage()
+        }
+        .alert("Premium Feature", isPresented: $showingPremiumPrompt) {
+            Button("Upgrade to Premium", role: .none) {
+                Task {
+                    isProcessingPurchase = true
+                    if let product = subscriptionManager.subscriptions.first {
+                        do {
+                            let success = try await subscriptionManager.purchase(product)
+                            if success {
+                                await userSettings.checkSubscriptionStatus()
+                                if userSettings.isPremium {
+                                    showingTryOn = true
+                                }
+                            }
+                        } catch {
+                            print("Error purchasing subscription: \(error)")
+                        }
+                    }
+                    isProcessingPurchase = false
+                }
+            }
+            Button("Maybe Later", role: .cancel) {}
+        } message: {
+            Text("Virtual Try-On is available exclusively for premium users. Upgrade now to try on clothes virtually!")
+        }
+        .overlay(Group {
+            if isProcessingPurchase {
+                Color.black.opacity(0.4)
+                    .edgesIgnoringSafeArea(.all)
+                    .overlay(
+                        ProgressView("Processing Purchase...")
+                            .foregroundColor(.white)
+                    )
+            }
+        })
+        .sheet(isPresented: $showingTryOn) {
+            if let tryOnImage = image {
+                VirtualTryOnView(clothingImage: tryOnImage)
+                    .environmentObject(userSettings)
+            }
         }
     }
     

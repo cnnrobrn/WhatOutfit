@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import StoreKit
 
 class UserSettings: ObservableObject {
     @Published var phoneNumber: String {
@@ -20,9 +21,28 @@ class UserSettings: ObservableObject {
         }
     }
     
+    @Published var isPremium: Bool = false {
+        didSet {
+            UserDefaults.standard.set(isPremium, forKey: "isPremium")
+        }
+    }
+    @Published var userBodyImage: Data? {
+        didSet {
+            UserDefaults.standard.set(userBodyImage, forKey: "userBodyImage")
+        }
+    }
+    
     init() {
         self.phoneNumber = UserDefaults.standard.string(forKey: "phoneNumber") ?? ""
         self.instagramUsername = UserDefaults.standard.string(forKey: "instagramUsername")
+        self.isPremium = UserDefaults.standard.bool(forKey: "isPremium")
+        self.userBodyImage = UserDefaults.standard.data(forKey: "userBodyImage")
+
+        
+        // Check subscription status on init
+        Task {
+            await checkSubscriptionStatus()
+        }
     }
     
     func clearPhoneNumber() {
@@ -30,5 +50,23 @@ class UserSettings: ObservableObject {
         instagramUsername = nil
         UserDefaults.standard.removeObject(forKey: "phoneNumber")
         UserDefaults.standard.removeObject(forKey: "instagramUsername")
+    }
+    func clearBodyImage() {
+        userBodyImage = nil
+        UserDefaults.standard.removeObject(forKey: "userBodyImage")
+    }
+    
+    @MainActor
+    func checkSubscriptionStatus() async {
+        do {
+            let statuses = try await Product.SubscriptionInfo.status(for: "Wha7PremiumOne")
+            // Check if any status is active
+            let isSubscribed = statuses.contains { status in
+                status.state == .subscribed
+            }
+            self.isPremium = isSubscribed
+        } catch {
+            print("Error checking subscription status: \(error)")
+        }
     }
 }

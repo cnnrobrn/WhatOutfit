@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var userSettings: UserSettings
     @Binding var isAuthenticated: Bool
+    @StateObject private var subscriptionManager = SubscriptionManager.shared
     
     var body: some View {
         VStack(spacing: 0) {
@@ -25,8 +26,44 @@ struct SettingsView: View {
                             Text(userSettings.phoneNumber)
                                 .foregroundColor(.gray)
                         }
+                        
+                        HStack {
+                            Text("Subscription Status")
+                            Spacer()
+                            Text(userSettings.isPremium ? "Premium" : "Free")
+                                .foregroundColor(userSettings.isPremium ? .green : .gray)
+                        }
                     }
-                    
+                    if !userSettings.isPremium {
+                        Section(header: Text("Premium Features")) {
+                            Button(action: {
+                                Task {
+                                    if let product = subscriptionManager.subscriptions.first {
+                                        do {
+                                            let success = try await subscriptionManager.purchase(product)
+                                            if success {
+                                                await userSettings.checkSubscriptionStatus()
+                                            }
+                                        } catch {
+                                            print("Error purchasing subscription: \(error)")
+                                        }
+                                    }
+                                }
+                            }) {
+                                HStack {
+                                    Text("Upgrade to Premium")
+                                    Spacer()
+                                    Image(systemName: "star.fill")
+                                        .foregroundColor(.yellow)
+                                }
+                            }
+                        }
+                    }
+                    Section(header: Text("Virtual Try-On")) {
+                        NavigationLink("Body Image Settings") {
+                            BodyImageSettingsView()
+                        }
+                    }
                     InstagramLinkingSection()
                     
                     Section {
@@ -51,7 +88,13 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    .navigationTitle("Settings")
+                }
+                .navigationTitle("Settings")
+                .task {
+                    // Load subscription products
+                    try? await subscriptionManager.loadProducts()
+                    // Check subscription status
+                    await userSettings.checkSubscriptionStatus()
                 }
             }
         }

@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4EC203142D18FF01005958DE /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4EC203132D18FF01005958DE /* StoreKit.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		BE4EFFE32CF2832900FF85DB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4EC203132D18FF01005958DE /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		BE4EFFCB2CF2832800FF85DB /* WhatOutfit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WhatOutfit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE4EFFE22CF2832900FF85DB /* WhatOutfitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WhatOutfitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE4EFFEC2CF2832900FF85DB /* WhatOutfitUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WhatOutfitUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -39,11 +44,22 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		4EC2031F2D1915C7005958DE /* Exceptions for "WhatOutfit" folder in "Copy Bundle Resources" phase from "WhatOutfit" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = BE4EFFC92CF2832800FF85DB /* Resources */;
+			membershipExceptions = (
+				WhatOutfitDebug.entitlements,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		BE4EFFCD2CF2832800FF85DB /* WhatOutfit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				BE4EFFF42CF2832900FF85DB /* Exceptions for "WhatOutfit" folder in "WhatOutfit" target */,
+				4EC2031F2D1915C7005958DE /* Exceptions for "WhatOutfit" folder in "Copy Bundle Resources" phase from "WhatOutfit" target */,
 			);
 			path = WhatOutfit;
 			sourceTree = "<group>";
@@ -65,6 +81,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4EC203142D18FF01005958DE /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,12 +102,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4EC203122D18FF01005958DE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4EC203132D18FF01005958DE /* StoreKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		BE4EFFC22CF2832800FF85DB = {
 			isa = PBXGroup;
 			children = (
 				BE4EFFCD2CF2832800FF85DB /* WhatOutfit */,
 				BE4EFFE52CF2832900FF85DB /* WhatOutfitTests */,
 				BE4EFFEF2CF2832900FF85DB /* WhatOutfitUITests */,
+				4EC203122D18FF01005958DE /* Frameworks */,
 				BE4EFFCC2CF2832800FF85DB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -316,6 +342,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -356,6 +383,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
