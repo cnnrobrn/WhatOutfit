@@ -5,10 +5,7 @@ struct ProductLinkView: View {
     let link: ProductLink
     @State private var image: UIImage?
     @State private var showingTryOn = false
-    @State private var showingPremiumPrompt = false
-    @State private var isProcessingPurchase = false
     @EnvironmentObject var userSettings: UserSettings
-    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -27,11 +24,7 @@ struct ProductLinkView: View {
                         HStack {
                             Spacer()
                             Button(action: {
-                                if userSettings.isPremium {
-                                    showingTryOn = true
-                                } else {
-                                    showingPremiumPrompt = true
-                                }
+                                showingTryOn = true
                             }) {
                                 HStack(spacing: 4) {
                                     Image(systemName: "person.crop.rectangle.fill")
@@ -98,40 +91,6 @@ struct ProductLinkView: View {
         .onAppear {
             loadImage()
         }
-        .alert("Premium Feature", isPresented: $showingPremiumPrompt) {
-            Button("Upgrade to Premium", role: .none) {
-                Task {
-                    isProcessingPurchase = true
-                    if let product = subscriptionManager.subscriptions.first {
-                        do {
-                            let success = try await subscriptionManager.purchase(product)
-                            if success {
-                                await userSettings.checkSubscriptionStatus()
-                                if userSettings.isPremium {
-                                    showingTryOn = true
-                                }
-                            }
-                        } catch {
-                            print("Error purchasing subscription: \(error)")
-                        }
-                    }
-                    isProcessingPurchase = false
-                }
-            }
-            Button("Maybe Later", role: .cancel) {}
-        } message: {
-            Text("Virtual Try-On is available exclusively for premium users. Upgrade now to try on clothes virtually!")
-        }
-        .overlay(Group {
-            if isProcessingPurchase {
-                Color.black.opacity(0.4)
-                    .edgesIgnoringSafeArea(.all)
-                    .overlay(
-                        ProgressView("Processing Purchase...")
-                            .foregroundColor(.white)
-                    )
-            }
-        })
         .sheet(isPresented: $showingTryOn) {
             if let tryOnImage = image {
                 VirtualTryOnView(clothingImage: tryOnImage)

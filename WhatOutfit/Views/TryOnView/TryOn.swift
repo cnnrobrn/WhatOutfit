@@ -7,42 +7,40 @@
 
 import SwiftUI
 
-
-
-
-// MARK: - Views
-
-
-// MARK: - Virtual Try-On View
 struct VirtualTryOnView: View {
+    // MARK: - Properties
+    let clothingImage: UIImage
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var userSettings: UserSettings
     @State private var resultImage: UIImage?
     @State private var isLoading = false
+    @State private var error: Error?
+    @State private var showError = false
     @State private var showBodyImageSetup = false
-    let clothingImage: UIImage
     
-    var body: some View {
-        VStack {
-            if isLoading {
-                ProgressView("Processing...")
-            } else if let result = resultImage {
-                Image(uiImage: result)
-                    .resizable()
-                    .scaledToFit()
-            } else {
-                Text("Ready for virtual try-on")
+    // MARK: - Body
+    var body: some View {  // This is the required property for View protocol conformance
+        ZStack {
+            // Main content
+            VStack {
+                if isLoading {
+                    loadingView
+                } else if let result = resultImage {
+                    resultView(image: result)
+                } else {
+                    startView
+                }
             }
-            
-            Button(action: performTryOn) {
-                Text("Try On")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(userSettings.userBodyImage == nil || isLoading)
+            .padding()
         }
-        .padding()
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showBodyImageSetup) {
             BodyImageSetupView()
+        }
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(error?.localizedDescription ?? "An unknown error occurred")
         }
         .onAppear {
             if userSettings.userBodyImage == nil {
@@ -51,9 +49,66 @@ struct VirtualTryOnView: View {
         }
     }
     
+    // MARK: - Subviews
+    private var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .scaleEffect(1.5)
+            Text("Creating your virtual try-on... please note that this feature only works for shirts, pants, jackets, dresses, skirts, and tops.")
+                .font(.headline)
+        }
+    }
+    
+    private func resultView(image: UIImage) -> some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .cornerRadius(12)
+                
+                Button("Try Another") {
+                    resultImage = nil
+                }
+                .buttonStyle(.bordered)
+                
+                Button("Done") {
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+    }
+    
+    private var startView: some View {
+        VStack(spacing: 20) {
+            if let userBodyImageData = userSettings.userBodyImage,
+               let userBodyImage = UIImage(data: userBodyImageData) {
+                Image(uiImage: userBodyImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxHeight: 300)
+                    .cornerRadius(12)
+            }
+            
+            Button(action: performTryOn) {
+                Text("Start Try-On")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(userSettings.userBodyImage == nil)
+            
+            if userSettings.userBodyImage == nil {
+                Text("Please set up your body image first")
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+    
+    // MARK: - Actions
     private func performTryOn() {
         guard let userImageData = userSettings.userBodyImage,
-              let clothingImageData = clothingImage.jpegData(compressionQuality: 0.8) else {
+              let userImage = UIImage(data: userImageData) else {
             return
         }
         
@@ -61,26 +116,24 @@ struct VirtualTryOnView: View {
         
         Task {
             do {
-                let resultData = try await TryOnService.shared.performTryOn(
-                    clothingImage: clothingImageData,
-                    userImage: userImageData
+                let result = try await TryOnService.shared.performTryOn(
+                    clothingImage: clothingImage,
+                    userImage: userImage
                 )
                 
-                if let result = UIImage(data: resultData) {
-                    await MainActor.run {
-                        resultImage = result
-                        isLoading = false
-                    }
+                await MainActor.run {
+                    resultImage = result
+                    isLoading = false
                 }
             } catch {
-                print("Try-on error: \(error)")
                 await MainActor.run {
+                    self.error = error
+                    self.showError = true
                     isLoading = false
                 }
             }
         }
     }
 }
-
 
 // MARK: - Image Picker
