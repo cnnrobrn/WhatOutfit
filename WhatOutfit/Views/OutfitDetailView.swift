@@ -1,10 +1,3 @@
-//
-//  OutfitDetailView.swift
-//  WhatOutfit
-//
-//  Created by Connor O'Brien on 11/23/24.
-//
-
 import SwiftUI
 
 struct OutfitDetailView: View {
@@ -58,7 +51,8 @@ struct OutfitDetailView: View {
     
     private func decodeImage(from base64String: String) -> UIImage? {
         // Remove prefix if present
-        let cleanedString = base64String.replacingOccurrences(of: "data:image/jpeg;base64,", with: "")
+        let cleanedString = base64String
+            .replacingOccurrences(of: "data:image/jpeg;base64,", with: "")
             .replacingOccurrences(of: "data:image/png;base64,", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         

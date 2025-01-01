@@ -17,7 +17,7 @@ class OutfitViewModel: ObservableObject {
     private var globalCurrentPage = 1
     private var personalHasMore = true
     private var globalHasMore = true
-    private let itemsPerPage = 10
+    private let itemsPerPage = 2
     private var cancellables = Set<AnyCancellable>()
     
     private struct OutfitResponse: Codable {
