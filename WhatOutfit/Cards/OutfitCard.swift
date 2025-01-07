@@ -126,6 +126,7 @@ struct OutfitCard: View {
                 videoPlayer.play()
             }
         videoPlayer.play()
+        videoPlayer.isMuted = true
     }
     
     private func handleVideoDisappearance() {
