@@ -1,3 +1,11 @@
+//
+//  GIFImage.swift
+//  WhatOutfit
+//
+//  Created by Connor O'Brien on 1/9/25.
+//
+
+
 import SwiftUI
 import WebKit
 

@@ -16,7 +16,7 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             WhatOutfitHeader()
                 .background(Color(.systemBackground))
-            ScrollingBanner(text: "🎉 Connect your Instagram to send posts directly to the Wha7_Outfit Instagram. Responses are displayed in app! 🎉")
+            //ScrollingBanner(text: "🎉 Connect your Instagram to send posts directly to the Wha7_Outfit Instagram. Responses are displayed in app! 🎉")
             NavigationView {
                 List {
                     Section(header: Text("Account Information")) {

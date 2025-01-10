@@ -12,6 +12,81 @@ struct VideoFrameSelectionView: View {
     @State private var progressMessage = "Processing frames..."
     @State private var showingDetailView = false
     @State private var updatedOutfit: Outfit?
+    @State private var isCapturing = false
+    @State private var imageGenerator: AVAssetImageGenerator?
+    
+    private func setupImageGenerator() {
+        guard imageGenerator == nil,
+              let asset = player?.currentItem?.asset else { return }
+        
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 720, height: 1280)
+        generator.requestedTimeToleranceBefore = .zero
+        generator.requestedTimeToleranceAfter = .zero
+        imageGenerator = generator
+    }
+    
+    private func captureCurrentFrame() {
+        guard !isCapturing,
+              let player = player,
+              let generator = imageGenerator else { return }
+        
+        // Prevent multiple simultaneous captures
+        isCapturing = true
+        
+        // Pause player during capture
+        player.pause()
+        
+        let time = CMTime(seconds: player.currentTime().seconds, preferredTimescale: 600)
+        
+        Task {
+            do {
+                let cgImage = try generator.copyCGImage(at: time, actualTime: nil)
+                let image = UIImage(cgImage: cgImage)
+                
+                await MainActor.run {
+                    if selectedFrames.count < 10 {
+                        let resizedImage = resizeImage(image, maxDimension: 720)
+                        selectedFrames.append(resizedImage)
+                    } else {
+                        showError(message: "Maximum 10 frames allowed")
+                    }
+                    isCapturing = false
+                    player.play()
+                }
+            } catch {
+                await MainActor.run {
+                    showError(message: "Error capturing frame: \(error.localizedDescription)")
+                    isCapturing = false
+                    player.play()
+                }
+            }
+        }
+    }
+    
+    private func resizeImage(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
+        let size = image.size
+        if size.width <= maxDimension && size.height <= maxDimension {
+            return image
+        }
+        
+        let ratio = size.width / size.height
+        let newSize: CGSize
+        if size.width > size.height {
+            newSize = CGSize(width: maxDimension, height: maxDimension / ratio)
+        } else {
+            newSize = CGSize(width: maxDimension * ratio, height: maxDimension)
+        }
+        
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1.0
+        
+        let renderer = UIGraphicsImageRenderer(size: newSize, format: format)
+        return renderer.image { context in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+    }
     
     private func submitFrames() {
         guard !selectedFrames.isEmpty else {
@@ -27,6 +102,9 @@ struct VideoFrameSelectionView: View {
         isProcessing = true
         progressMessage = "Processing frames..."
         
+        // Pause video during processing
+        player?.pause()
+        
         Task {
             do {
                 let processedFrames = try await OutfitService.shared.submitFrames(
@@ -37,7 +115,6 @@ struct VideoFrameSelectionView: View {
                 await MainActor.run {
                     isProcessing = false
                     if let lastFrame = processedFrames.last {
-                        // Convert ProcessedItems to items
                         let convertedItems = lastFrame.items.map { processedItem in
                             processedItem.toItem(outfitId: outfit.id)
                         }
@@ -60,62 +137,12 @@ struct VideoFrameSelectionView: View {
             }
         }
     }
-
-
-    private func captureCurrentFrame(from player: AVPlayer) {
-        guard let asset = player.currentItem?.asset else { return }
-        
-        let imageGenerator = AVAssetImageGenerator(asset: asset)
-        imageGenerator.appliesPreferredTrackTransform = true
-        imageGenerator.maximumSize = CGSize(width: 1920, height: 1080)
-        imageGenerator.requestedTimeToleranceBefore = .zero
-        imageGenerator.requestedTimeToleranceAfter = .zero
-        
-        let time = CMTime(seconds: player.currentTime().seconds,
-                         preferredTimescale: 600)
-        
-        do {
-            let cgImage = try imageGenerator.copyCGImage(at: time, actualTime: nil)
-            let image = UIImage(cgImage: cgImage)
-            let resizedImage = resizeImageIfNeeded(image, maxDimension: 1920)
-            
-            // Limit the number of frames
-            if selectedFrames.count < 10 {
-                selectedFrames.append(resizedImage)
-            } else {
-                showError(message: "Maximum 10 frames allowed")
-            }
-        } catch {
-            showError(message: "Error capturing frame: \(error.localizedDescription)")
-        }
-    }
-    
-    private func resizeImageIfNeeded(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
-        let size = image.size
-        if size.width <= maxDimension && size.height <= maxDimension {
-            return image
-        }
-        
-        let ratio = size.width / size.height
-        let newSize: CGSize
-        if size.width > size.height {
-            newSize = CGSize(width: maxDimension, height: maxDimension / ratio)
-        } else {
-            newSize = CGSize(width: maxDimension * ratio, height: maxDimension)
-        }
-        
-        let renderer = UIGraphicsImageRenderer(size: newSize)
-        return renderer.image { context in
-            image.draw(in: CGRect(origin: .zero, size: newSize))
-        }
-    }
     
     private func showError(message: String) {
         errorMessage = message
         showError = true
     }
     
-
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
@@ -137,12 +164,15 @@ struct VideoFrameSelectionView: View {
                             VideoPlayer(player: player)
                                 .frame(height: 400)
                                 .cornerRadius(12)
-                            
-                            Button(action: {
-                                captureCurrentFrame(from: player)
-                            }) {
-                                Color.clear
-                            }
+                                .overlay(
+                                    Button(action: {
+                                        if !isCapturing {
+                                            captureCurrentFrame()
+                                        }
+                                    }) {
+                                        Color.clear
+                                    }
+                                )
                         }
                     }
                     
@@ -153,7 +183,7 @@ struct VideoFrameSelectionView: View {
                     }
                     
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
+                        LazyHStack(spacing: 12) {
                             ForEach(selectedFrames.indices, id: \.self) { index in
                                 FrameThumbnail(image: selectedFrames[index]) {
                                     selectedFrames.remove(at: index)
@@ -177,7 +207,10 @@ struct VideoFrameSelectionView: View {
                     .padding(.horizontal)
                 }
             }
-            .navigationBarItems(leading: Button("Cancel") { dismiss() })
+            .navigationBarItems(leading: Button("Cancel") {
+                player?.pause()
+                dismiss()
+            })
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) { }
             } message: {
@@ -187,6 +220,14 @@ struct VideoFrameSelectionView: View {
                 if let updatedOutfit = updatedOutfit {
                     OutfitDetailView(outfit: updatedOutfit)
                 }
+            }
+            .onAppear {
+                setupImageGenerator()
+                player?.play()
+            }
+            .onDisappear {
+                player?.pause()
+                imageGenerator = nil
             }
         }
     }

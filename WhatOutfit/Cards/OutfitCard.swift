@@ -1,6 +1,7 @@
 import SwiftUI
 import AVKit
 
+
 struct OutfitCard: View {
     let outfit: Outfit
     let onTap: () -> Void
@@ -14,13 +15,14 @@ struct OutfitCard: View {
     @State private var showingImageDetail = false
     @State private var hasProcessedFrames = false
     @State private var processedItems: [item]?
+    @State private var playerID = UUID()
     
-    private let videoPlayerManager = VideoPlayerManager.shared
+    // Add observation of VideoPlayerManager
+    @StateObject private var videoPlayerManager = VideoPlayerManager.shared
     
     private func handleCardTap() {
         Task {
             if player != nil {
-                // Check for processed frames every time the card is tapped
                 do {
                     let (hasFrames, items) = try await OutfitService.shared.checkProcessedFrames(outfitId: outfit.id)
                     await MainActor.run {
@@ -34,44 +36,12 @@ struct OutfitCard: View {
                     }
                 } catch {
                     print("Error checking frames: \(error)")
-                    // If we can't check, default to frame selection
                     await MainActor.run {
                         showingFrameSelection = true
                     }
                 }
             } else {
                 showingImageDetail = true
-            }
-        }
-    }
-    
-    private func calculateImageHeight(from image: UIImage) -> CGFloat {
-        let screenWidth = UIScreen.main.bounds.width - 32
-        let aspectRatio = image.size.height / image.size.width
-        return screenWidth * aspectRatio
-    }
-    
-    private func calculateVideoHeight(from asset: AVAsset) async -> CGFloat {
-        let screenWidth = UIScreen.main.bounds.width - 32
-        do {
-            let tracks = try await asset.loadTracks(withMediaType: .video)
-            guard let track = tracks.first else { return 400 }
-            let videoSize = try await track.load(.naturalSize)
-            let aspectRatio = videoSize.height / videoSize.width
-            return screenWidth * aspectRatio
-        } catch {
-            print("Error calculating video height: \(error)")
-            return 400
-        }
-    }
-    
-    private func updateVideoHeight(for videoPlayer: AVPlayer) {
-        guard let asset = videoPlayer.currentItem?.asset else { return }
-        
-        Task {
-            let height = await calculateVideoHeight(from: asset)
-            await MainActor.run {
-                mediaHeight = height
             }
         }
     }
@@ -87,55 +57,105 @@ struct OutfitCard: View {
             return (nil, nil)
         }
         
+        // Try to decode as image first
         if let image = UIImage(data: data) {
+            // Resize image to a reasonable size for display
+            let maxDimension: CGFloat = 1080 // Maximum dimension for images
+            let size = image.size
+            
+            if size.width > maxDimension || size.height > maxDimension {
+                let ratio = size.width / size.height
+                let newSize: CGSize
+                if size.width > size.height {
+                    newSize = CGSize(width: maxDimension, height: maxDimension / ratio)
+                } else {
+                    newSize = CGSize(width: maxDimension * ratio, height: maxDimension)
+                }
+                
+                UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+                image.draw(in: CGRect(origin: .zero, size: newSize))
+                let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+                UIGraphicsEndImageContext()
+                
+                return (resizedImage, nil)
+            }
+            
             return (image, nil)
         }
         
-        let tmpURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp4")
+        // If not an image, handle as video
+        let tmpURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("mp4")
+        
         do {
             try data.write(to: tmpURL)
-            let player = AVPlayer(url: tmpURL)
+            
+            // Create asset with options for better performance
+            let assetOptions = [
+                AVURLAssetPreferPreciseDurationAndTimingKey: false
+            ]
+            let asset = AVURLAsset(url: tmpURL, options: assetOptions)
+            let playerItem = AVPlayerItem(asset: asset)
+            
+            // Aggressively optimize playback settings
+            playerItem.preferredPeakBitRate = 800_000 // 800Kbps - much lower but still decent quality
+            playerItem.preferredMaximumResolution = CGSize(width: 480, height: 854) // 480p
+            
+            // Configure AVPlayer
+            let player = AVPlayer(playerItem: playerItem)
+            player.automaticallyWaitsToMinimizeStalling = true
+            player.isMuted = true
+            
+            // Set playback rate for potentially smoother playback
+            player.rate = 1.0
+            
+            // Configure additional AVPlayerItem settings
+            playerItem.canUseNetworkResourcesForLiveStreamingWhilePaused = false
+            
             return (nil, player)
         } catch {
             print("Error creating video player: \(error)")
+            // Clean up temp file if creation failed
+            try? FileManager.default.removeItem(at: tmpURL)
             return (nil, nil)
         }
     }
-    private func checkProcessedFrames() {
-        Task {
-            do {
-                let (hasFrames, items) = try await OutfitService.shared.checkProcessedFrames(outfitId: outfit.id)
-                await MainActor.run {
-                    hasProcessedFrames = hasFrames
-                    processedItems = items
-                }
-            } catch {
-                print("Error checking processed frames: \(error)")
-            }
-        }
-    }
+    
     private func handleVideoAppearance() {
-        guard let videoPlayer = player else { return }
-        videoPlayerManager.setCurrentPlayer(videoPlayer)
-        videoPlayer.actionAtItemEnd = .none
-        NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: videoPlayer.currentItem,
-            queue: .main) { _ in
-                videoPlayer.seek(to: .zero)
-                videoPlayer.play()
-            }
-        videoPlayer.play()
-        videoPlayer.isMuted = true
+        guard let videoPlayer = player, isVisible else { return }
+        
+        // Only manage playback if we're the current player
+        videoPlayerManager.setCurrentPlayer(videoPlayer, withID: playerID)
+        
+        if videoPlayerManager.isCurrentPlayer(videoPlayer, withID: playerID) {
+            videoPlayer.actionAtItemEnd = .none
+            
+            NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: videoPlayer.currentItem,
+                queue: .main) { [weak videoPlayer] _ in
+                    guard let player = videoPlayer else { return }
+                    player.seek(to: .zero)
+                    if videoPlayerManager.isCurrentPlayer(player, withID: playerID) {
+                        player.play()
+                    }
+                }
+            
+            videoPlayer.play()
+        }
     }
     
     private func handleVideoDisappearance() {
         guard let videoPlayer = player else { return }
-        videoPlayer.pause()
-        NotificationCenter.default.removeObserver(self)
-        if isVisible {
+        
+        // Only stop if we're the current player
+        if videoPlayerManager.isCurrentPlayer(videoPlayer, withID: playerID) {
             videoPlayerManager.stopCurrentPlayer()
         }
+        
+        NotificationCenter.default.removeObserver(self)
+        videoPlayer.pause()
     }
     
     var body: some View {
@@ -169,13 +189,6 @@ struct OutfitCard: View {
                                 player = videoPlayer
                                 updateVideoHeight(for: videoPlayer)
                                 isLoading = false
-                                isVisible = true
-                                handleVideoAppearance()
-                                checkProcessedFrames()
-                            }
-                            .onDisappear {
-                                isVisible = false
-                                handleVideoDisappearance()
                             }
                     } else if imageLoadError {
                         VStack {
@@ -205,12 +218,45 @@ struct OutfitCard: View {
             .padding(.horizontal)
         }
         .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            isVisible = true
+            if player != nil {
+                handleVideoAppearance()
+            }
+        }
+        .onDisappear {
+            isVisible = false
+            if player != nil {
+                handleVideoDisappearance()
+            }
+        }
+        // Track ScrollView visibility
+        .onChange(of: isVisible) { newValue in
+            if newValue {
+                if player != nil {
+                    handleVideoAppearance()
+                }
+            } else {
+                if player != nil {
+                    handleVideoDisappearance()
+                }
+            }
+        }
+        // Clean up when view is destroyed
+        .onDisappear {
+            if let videoPlayer = player {
+                videoPlayer.pause()
+                NotificationCenter.default.removeObserver(self)
+                if videoPlayerManager.isCurrentPlayer(videoPlayer, withID: playerID) {
+                    videoPlayerManager.stopCurrentPlayer()
+                }
+            }
+        }
         .fullScreenCover(isPresented: $showingFrameSelection) {
             VideoFrameSelectionView(player: player, outfit: outfit)
         }
         .sheet(isPresented: $showingImageDetail) {
             if player != nil && hasProcessedFrames {
-                // Show outfit detail with processed items
                 OutfitDetailView(outfit: Outfit(
                     id: outfit.id,
                     imageData: outfit.imageData,
@@ -219,6 +265,34 @@ struct OutfitCard: View {
                 ))
             } else {
                 OutfitDetailView(outfit: outfit)
+            }
+        }
+    }
+    
+    private func calculateImageHeight(from image: UIImage) -> CGFloat {
+        let screenWidth = UIScreen.main.bounds.width - 32
+        let aspectRatio = image.size.height / image.size.width
+        return screenWidth * aspectRatio
+    }
+    
+    private func updateVideoHeight(for videoPlayer: AVPlayer) {
+        guard let asset = videoPlayer.currentItem?.asset else { return }
+        
+        Task {
+            do {
+                let tracks = try await asset.loadTracks(withMediaType: .video)
+                guard let track = tracks.first else { return }
+                let videoSize = try await track.load(.naturalSize)
+                let screenWidth = UIScreen.main.bounds.width - 32
+                let aspectRatio = videoSize.height / videoSize.width
+                await MainActor.run {
+                    mediaHeight = screenWidth * aspectRatio
+                }
+            } catch {
+                print("Error calculating video height: \(error)")
+                await MainActor.run {
+                    mediaHeight = 400
+                }
             }
         }
     }
