@@ -16,6 +16,8 @@ struct OutfitCard: View {
     @State private var hasProcessedFrames = false
     @State private var processedItems: [item]?
     @State private var playerID = UUID()
+    @State private var videoURL: URL?
+    @State private var isVideoReady = false
     
     // Add observation of VideoPlayerManager
     @StateObject private var videoPlayerManager = VideoPlayerManager.shared
@@ -268,7 +270,34 @@ struct OutfitCard: View {
             }
         }
     }
-    
+    private func setupVideo(url: URL) {
+        let asset = AVURLAsset(url: url)
+        let playerItem = AVPlayerItem(asset: asset)
+        
+        // Configure player item
+        playerItem.preferredPeakBitRate = 800_000
+        playerItem.preferredMaximumResolution = CGSize(width: 480, height: 854)
+        
+        let newPlayer = AVPlayer(playerItem: playerItem)
+        newPlayer.automaticallyWaitsToMinimizeStalling = false
+        newPlayer.isMuted = true
+        
+        // Preload video
+        Task {
+            do {
+                try await playerItem.asset.load(.isPlayable)
+                await MainActor.run {
+                    player = newPlayer
+                    isVideoReady = true
+                    if isVisible {
+                        handleVideoAppearance()
+                    }
+                }
+            } catch {
+                print("Error loading video: \(error)")
+            }
+        }
+    }
     private func calculateImageHeight(from image: UIImage) -> CGFloat {
         let screenWidth = UIScreen.main.bounds.width - 32
         let aspectRatio = image.size.height / image.size.width

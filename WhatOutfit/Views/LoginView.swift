@@ -15,29 +15,54 @@ struct LoginView: View {
     @EnvironmentObject private var userSettings: UserSettings
     
     var body: some View {
-        VStack(spacing: 20) {
-            Image("Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 50)
-                .padding(.bottom, 20)
+        VStack {
+            Spacer()
             
-            TextField("Phone Number", text: $phoneNumber)
-                .textFieldStyle(.roundedBorder)
-                .keyboardType(.phonePad)
-                .padding()
-            
-            Button("Continue") {
-                validateAndLogin()
+            VStack(spacing: 40) {
+                // Logo
+                Image("Logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 80)
+                
+                // Phone Input Section
+                VStack(spacing: 8) {
+                    TextField("Phone Number", text: $phoneNumber)
+                        .font(.system(size: 17))
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemGray6))
+                        )
+                        .keyboardType(.phonePad)
+                    
+//                    Text("We'll send you a verification code")
+//                        .font(.caption)
+//                        .foregroundColor(.gray)
+                }
+                .padding(.horizontal, 24)
             }
-            .buttonStyle(.borderedProminent)
+            
+            Spacer()
+            
+            // Continue Button
+            Button(action: validateAndLogin) {
+                Text("Continue")
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.black)
+                    .foregroundColor(.white)
+                    .cornerRadius(25)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 20)
         }
-        .padding()
         .alert("Invalid Phone Number", isPresented: $showError) {
             Button("OK", role: .cancel) { }
+        } message: {
+            Text("Please enter a valid 10-digit phone number")
         }
         .onAppear {
-            // Check if phone number exists and isn't empty
             if !userSettings.phoneNumber.isEmpty {
                 phoneNumber = userSettings.phoneNumber
                 onComplete(true)
@@ -46,7 +71,6 @@ struct LoginView: View {
     }
     
     private func validateAndLogin() {
-        // Basic validation
         let cleaned = phoneNumber.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
         if cleaned.count == 10 {
             userSettings.phoneNumber = phoneNumber
