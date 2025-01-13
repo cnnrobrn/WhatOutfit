@@ -38,6 +38,7 @@
 		BE4EFFF42CF2832900FF85DB /* Exceptions for "WhatOutfit" folder in "WhatOutfit" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				DeepLink/Scenedelegate.swift,
 				Info.plist,
 			);
 			target = BE4EFFCA2CF2832800FF85DB /* WhatOutfit */;
@@ -49,6 +50,7 @@
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			buildPhase = BE4EFFC92CF2832800FF85DB /* Resources */;
 			membershipExceptions = (
+				DeepLink/Scenedelegate.swift,
 				WhatOutfitDebug.entitlements,
 			);
 		};

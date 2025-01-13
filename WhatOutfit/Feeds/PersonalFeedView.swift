@@ -5,9 +5,6 @@ struct PersonalFeedView: View {
     @EnvironmentObject var userSettings: UserSettings
     let phoneNumber: String
     
-    // Track scroll position
-    @State private var isNearBottom = false
-    
     var body: some View {
         VStack(spacing: 0) {
             WhatOutfitHeader()
@@ -15,15 +12,13 @@ struct PersonalFeedView: View {
             
             ScrollView {
                 LazyVStack(spacing: 16) {
-                    ForEach(Array(viewModel.personalOutfits.enumerated()), id: \.element.id) { index, outfit in
-                        OutfitCard(outfit: outfit) {
-                            viewModel.selectedOutfit = outfit
+                    ForEach(viewModel.personalOutfits.indices, id: \.self) { index in
+                        OutfitCard(outfit: viewModel.personalOutfits[index]) {
+                            viewModel.selectedOutfit = viewModel.personalOutfits[index]
                         }
-                        .id(outfit.id)
                         .onAppear {
-                            // Check if we're within the last item
-                            if index <= viewModel.personalOutfits.count - 2 {
-                                // Trigger load more when last item appears
+                            // Load more when we're 2 items away from the end
+                            if index == viewModel.personalOutfits.count - 2 && !viewModel.isLoading {
                                 viewModel.loadPersonalOutfits(
                                     phoneNumber: phoneNumber,
                                     instagramUsername: userSettings.instagramUsername,
@@ -42,6 +37,7 @@ struct PersonalFeedView: View {
                 .padding(.vertical)
             }
             .refreshable {
+                // Reset and reload from start on pull-to-refresh
                 viewModel.loadPersonalOutfits(
                     phoneNumber: phoneNumber,
                     instagramUsername: userSettings.instagramUsername
@@ -57,31 +53,4 @@ struct PersonalFeedView: View {
             }
         }
     }
-}
-
-// Preference key for tracking frame positions
-struct FramePreferenceKey: PreferenceKey {
-    static var defaultValue: CGRect = .zero
-    
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        value = nextValue()
-    }
-}
-
-// Add extension to help with scroll position tracking
-extension View {
-    func readSize(onChange: @escaping (CGRect) -> Void) -> some View {
-        background(
-            GeometryReader { geometryProxy in
-                Color.clear
-                    .preference(key: SizePreferenceKey.self, value: geometryProxy.frame(in: .named("scroll")))
-            }
-        )
-        .onPreferenceChange(SizePreferenceKey.self, perform: onChange)
-    }
-}
-
-private struct SizePreferenceKey: PreferenceKey {
-    static var defaultValue: CGRect = .zero
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {}
 }

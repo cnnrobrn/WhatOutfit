@@ -71,7 +71,9 @@ class OutfitViewModel: ObservableObject {
                 }
                 
                 self.globalHasMore = response.has_more
-                self.globalCurrentPage += 1
+                if response.has_more {
+                    self.globalCurrentPage += 1
+                }
                 print("Loaded \(response.outfits.count) global outfits, hasMore: \(response.has_more)")
             }
             .store(in: &cancellables)
@@ -147,6 +149,7 @@ class OutfitViewModel: ObservableObject {
                 if response.has_more {
                     self.personalCurrentPage += 1
                 }
+                
                 print("Loaded \(response.outfits.count) personal outfits, hasMore: \(response.has_more)")
             }
             .store(in: &cancellables)

@@ -2,6 +2,7 @@ import SwiftUI
 import StoreKit
 
 class UserSettings: ObservableObject {
+    
     @Published var phoneNumber: String {
         didSet {
             UserDefaults.standard.set(phoneNumber, forKey: "phoneNumber")

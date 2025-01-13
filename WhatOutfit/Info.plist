@@ -12,5 +12,21 @@
 	<array>
 		<string>fetch</string>
 	</array>
+    <key>com.apple.developer.associated-domains</key>
+    <array>
+        <string>applinks:redirect.wha7.com</string>
+    </array>
+
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>wha7</string>
+            </array>
+            <key>CFBundleURLName</key>
+            <string>com.wha7.app</string>
+        </dict>
+    </array>
 </dict>
 </plist>
