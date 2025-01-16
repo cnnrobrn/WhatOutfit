@@ -16,7 +16,6 @@ struct OutfitCard: View {
     @State private var hasProcessedFrames = false
     @State private var processedItems: [item]?
     @State private var mediaImage: UIImage?
-    @State private var isViewVisible = false
     
     @StateObject private var playerManager = VideoPlayerManager.shared
     
@@ -116,16 +115,14 @@ struct OutfitCard: View {
                         VideoPlayer(player: videoPlayer)
                             .frame(maxWidth: .infinity)
                             .frame(height: mediaHeight)
-                            .preference(key: ViewVisibilityKey.self, value: true)
-                            .onPreferenceChange(ViewVisibilityKey.self) { isVisible in
-                                if isVisible != isViewVisible {
-                                    isViewVisible = isVisible
-                                    if isVisible {
-                                        playerManager.playVideo(id: playerId)
-                                    } else {
-                                        playerManager.pauseVideo(id: playerId)
-                                    }
+                            .onAppear {
+                                // Small delay to ensure view is fully loaded
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    playerManager.playVideo(id: playerId)
                                 }
+                            }
+                            .onDisappear {
+                                playerManager.pauseVideo(id: playerId)
                             }
                     } else if !isVideoContent, let image = mediaImage {
                         Image(uiImage: image)
@@ -156,8 +153,11 @@ struct OutfitCard: View {
         .task {
             setupMedia()
         }
+        // Only cleanup on the final disappearance
         .onDisappear {
-            if isVideoContent {
+            if self.showingFrameSelection || self.showingImageDetail {
+                playerManager.pauseVideo(id: playerId)
+            } else {
                 playerManager.cleanupPlayer(id: playerId)
             }
         }
@@ -176,14 +176,5 @@ struct OutfitCard: View {
                 OutfitDetailView(outfit: outfit)
             }
         }
-    }
-}
-
-// Preference key for tracking view visibility
-struct ViewVisibilityKey: PreferenceKey {
-    static var defaultValue: Bool = false
-    
-    static func reduce(value: inout Bool, nextValue: () -> Bool) {
-        value = nextValue()
     }
 }
