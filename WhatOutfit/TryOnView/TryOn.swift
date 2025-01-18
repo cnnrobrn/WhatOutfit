@@ -67,7 +67,7 @@ struct VirtualTryOnView: View {
                 Spacer()
                 
                 VStack(spacing: 20) {
-                    Text("Creating your virtual try-on...")
+                    Text("Creating your virtual try-on...enjoy this game while you wait.")
                         .font(.headline)
                     
                     // Game Area
@@ -187,8 +187,6 @@ struct VirtualTryOnView: View {
         }
     }
     
-
-
     private func jump() {
         if !isJumping {
             isJumping = true
@@ -209,23 +207,40 @@ struct VirtualTryOnView: View {
         gameTimer?.invalidate()
         gameTimer = nil
     }
+
     private func resultView(image: UIImage) -> some View {
         ScrollView {
             VStack(spacing: 20) {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .cornerRadius(12)
+                    .cornerRadius(25)
                 
-                Button("Try Another") {
-                    resultImage = nil
+                VStack(spacing: 12) {
+                    ShareLink(
+                        item: Image(uiImage: image),
+                        preview: SharePreview(
+                            "I tried this outfit on in the wha7 app. Try on outfits for yourself at redirect.wha7.com/",
+                            image: Image(uiImage: image)
+                        )
+                    ) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.black)
+                            .foregroundColor(.white)
+                            .cornerRadius(25)
+                    }
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.black)
+                    .foregroundColor(.white)
+                    .cornerRadius(25)
                 }
-                .buttonStyle(.bordered)
-                
-                Button("Done") {
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
+                .padding(.horizontal)
             }
         }
     }
@@ -285,5 +300,3 @@ struct VirtualTryOnView: View {
         }
     }
 }
-
-// MARK: - Image Picker

@@ -100,10 +100,32 @@ struct ProductLinkView: View {
     }
     
     private func loadImage() {
-        if let photoUrl = link.photoUrl {
+        guard let photoUrl = link.photoUrl else { return }
+        
+        // Check if the string is a URL
+        if let url = URL(string: photoUrl), url.scheme != nil {
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                if let error = error {
+                    print("Error loading image URL for item: \(self.link.title ?? "unknown") - \(error)")
+                    return
+                }
+                
+                guard let data = data,
+                      let uiImage = UIImage(data: data) else {
+                    print("Failed to create UIImage from URL data for item: \(self.link.title ?? "unknown")")
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self.image = uiImage
+                }
+            }.resume()
+        } else {
+            // Handle base64 image
             let cleanedString = photoUrl
                 .replacingOccurrences(of: "data:image/jpeg;base64,", with: "")
                 .replacingOccurrences(of: "data:image/png;base64,", with: "")
+                .replacingOccurrences(of: "data:image/webp;base64,", with: "")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             
             guard let imageData = Data(base64Encoded: cleanedString) else {
@@ -117,7 +139,7 @@ struct ProductLinkView: View {
                         self.image = uiImage
                     }
                 } else {
-                    print("Failed to create UIImage from Data for item: \(link.title ?? "unknown")")
+                    print("Failed to create UIImage from Data for item: \(self.link.title ?? "unknown")")
                 }
             }
         }

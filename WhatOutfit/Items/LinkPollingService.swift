@@ -2,6 +2,14 @@
 //  LinkPollingService.swift
 //  WhatOutfit
 //
+//  Created by Connor O'Brien on 1/12/25.
+//
+
+
+//
+//  LinkPollingService.swift
+//  WhatOutfit
+//
 
 import Foundation
 import Combine

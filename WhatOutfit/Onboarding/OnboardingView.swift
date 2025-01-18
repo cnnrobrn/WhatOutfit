@@ -268,29 +268,35 @@ struct OnboardingView: View {
                     .padding()
             }
         } else if page.isLastPage {
-            Button(action: {
-                Task {
-                    if let product = subscriptionManager.subscriptions.first {
-                        do {
-                            let success = try await subscriptionManager.purchase(product)
-                            if success {
-                                await userSettings.checkSubscriptionStatus()
-                                onboardingState.hasSeenOnboarding = true
-                                showLogin = true
+            VStack(spacing: 16) {
+                Button(action: {
+                    Task {
+                        if let product = subscriptionManager.subscriptions.first {
+                            do {
+                                let success = try await subscriptionManager.purchase(product)
+                                if success {
+                                    await userSettings.checkSubscriptionStatus()
+                                    onboardingState.hasSeenOnboarding = true
+                                    showLogin = true
+                                }
+                            } catch {
+                                print("DEBUG: Error purchasing subscription: \(error)")
                             }
-                        } catch {
-                            print("Error purchasing subscription: \(error)")
                         }
                     }
+                }) {
+                    Text("Get Started for $0.99 per Week")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.black)
+                        .foregroundColor(.white)
+                        .cornerRadius(25)
                 }
-            }) {
-                Text("Get Started")
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.black)
-                    .foregroundColor(.white)
-                    .cornerRadius(25)
-                    .padding()
+                .padding(.horizontal)
+                
+                LegalFooterView()
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 8)
             }
         } else {
             Button(action: {

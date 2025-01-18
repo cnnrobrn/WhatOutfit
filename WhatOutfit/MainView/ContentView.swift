@@ -11,10 +11,21 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var isCheckingSubscription = false
     
+    // Add computed property to filter phone number
+    private var filteredPhoneNumber: Binding<String> {
+        Binding(
+            get: { phoneNumber },
+            set: { newValue in
+                phoneNumber = newValue.filter { $0.isNumber }
+            }
+        )
+    }
+    
     var body: some View {
         Group {
             if !isAuthenticated {
-                LoginView(phoneNumber: $phoneNumber) { success in
+                // Use filteredPhoneNumber instead of phoneNumber
+                LoginView(phoneNumber: filteredPhoneNumber) { success in
                     isAuthenticated = success
                 }
             } else if !onboardingState.hasSeenOnboarding {

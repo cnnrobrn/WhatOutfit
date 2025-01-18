@@ -1,0 +1,15 @@
+{
+  "originHash" : "048dbcecdf4d613aa760b274b91074930cb44e3957532ee169c88a1a0b3bc137",
+  "pins" : [
+    {
+      "identity" : "twilio-verify-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/twilio/twilio-verify-ios",
+      "state" : {
+        "revision" : "24e15039006a5313dc13f98a0995a60aa764dfb7",
+        "version" : "2.2.2"
+      }
+    }
+  ],
+  "version" : 3
+}

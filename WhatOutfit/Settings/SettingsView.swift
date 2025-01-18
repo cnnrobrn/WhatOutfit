@@ -1,10 +1,3 @@
-//
-//  SettingsView.swift
-//  WhatOutfit
-//
-//  Created by Connor O'Brien on 11/24/24.
-//
-
 import SwiftUI
 
 struct SettingsView: View {
@@ -56,6 +49,29 @@ struct SettingsView: View {
                                 Spacer()
                             }
                         }
+                    }
+                    
+                    // Legal Footer Section
+                    Section {
+                        VStack(alignment: .center, spacing: 4) {
+                            Text("Version 1.0")
+                                .font(.system(size: 12))
+                                .foregroundColor(.gray)
+                            
+                            HStack(spacing: 4) {
+                                Link("Terms of Use", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                                    .font(.system(size: 12))
+                                
+                                Text("•")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.gray)
+                                
+                                Link("Privacy Policy", destination: URL(string: "https://www.wha7.com/privacy")!)
+                                    .font(.system(size: 12))
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .listRowBackground(Color.clear)
                     }
                 }
                 .navigationTitle("Settings")

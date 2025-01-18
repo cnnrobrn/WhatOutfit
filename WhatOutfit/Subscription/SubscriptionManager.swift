@@ -16,7 +16,7 @@ class SubscriptionManager: ObservableObject {
     @Published var isSubscriptionActive: Bool = false
     
     private var productIds: [String] = [
-        "Wha7PremiumOne"
+        "Premium"
     ]
     
     private init() {

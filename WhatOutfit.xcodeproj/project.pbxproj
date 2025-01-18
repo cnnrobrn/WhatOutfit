@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		4EC203142D18FF01005958DE /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4EC203132D18FF01005958DE /* StoreKit.framework */; };
+		BE668DB92D3A1D9C00747C95 /* Wha7 Premium.storekit in Resources */ = {isa = PBXBuildFile; fileRef = BE668DB82D3A1D9C00747C95 /* Wha7 Premium.storekit */; };
+		BE6790BB2D38B91F00B9B629 /* TwilioVerifySDK in Frameworks */ = {isa = PBXBuildFile; productRef = BE6790BA2D38B91F00B9B629 /* TwilioVerifySDK */; };
+		BE67917D2D3A1CCA00B9B629 /* Wha7.storekit in Resources */ = {isa = PBXBuildFile; fileRef = BE67917C2D3A1CCA00B9B629 /* Wha7.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +35,8 @@
 		BE4EFFCB2CF2832800FF85DB /* WhatOutfit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WhatOutfit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE4EFFE22CF2832900FF85DB /* WhatOutfitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WhatOutfitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE4EFFEC2CF2832900FF85DB /* WhatOutfitUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WhatOutfitUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BE668DB82D3A1D9C00747C95 /* Wha7 Premium.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Wha7 Premium.storekit"; sourceTree = "<group>"; };
+		BE67917C2D3A1CCA00B9B629 /* Wha7.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Wha7.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -83,6 +88,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE6790BB2D38B91F00B9B629 /* TwilioVerifySDK in Frameworks */,
 				4EC203142D18FF01005958DE /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -115,6 +121,8 @@
 		BE4EFFC22CF2832800FF85DB = {
 			isa = PBXGroup;
 			children = (
+				BE67917C2D3A1CCA00B9B629 /* Wha7.storekit */,
+				BE668DB82D3A1D9C00747C95 /* Wha7 Premium.storekit */,
 				BE4EFFCD2CF2832800FF85DB /* WhatOutfit */,
 				BE4EFFE52CF2832900FF85DB /* WhatOutfitTests */,
 				BE4EFFEF2CF2832900FF85DB /* WhatOutfitUITests */,
@@ -153,6 +161,7 @@
 			);
 			name = WhatOutfit;
 			packageProductDependencies = (
+				BE6790BA2D38B91F00B9B629 /* TwilioVerifySDK */,
 			);
 			productName = WhatOutfit;
 			productReference = BE4EFFCB2CF2832800FF85DB /* WhatOutfit.app */;
@@ -236,6 +245,9 @@
 			);
 			mainGroup = BE4EFFC22CF2832800FF85DB;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				BE6790B92D38B6DF00B9B629 /* XCRemoteSwiftPackageReference "twilio-verify-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BE4EFFCC2CF2832800FF85DB /* Products */;
 			projectDirPath = "";
@@ -253,6 +265,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE67917D2D3A1CCA00B9B629 /* Wha7.storekit in Resources */,
+				BE668DB92D3A1D9C00747C95 /* Wha7 Premium.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -343,11 +357,11 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -384,11 +398,11 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -448,7 +462,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -505,6 +519,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
@@ -623,6 +638,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		BE6790B92D38B6DF00B9B629 /* XCRemoteSwiftPackageReference "twilio-verify-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/twilio/twilio-verify-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BE6790BA2D38B91F00B9B629 /* TwilioVerifySDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BE6790B92D38B6DF00B9B629 /* XCRemoteSwiftPackageReference "twilio-verify-ios" */;
+			productName = TwilioVerifySDK;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = BE4EFFC32CF2832800FF85DB /* Project object */;
 }
