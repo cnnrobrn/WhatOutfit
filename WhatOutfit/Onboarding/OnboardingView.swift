@@ -17,7 +17,6 @@ struct OnboardingView: View {
     @EnvironmentObject var userSettings: UserSettings
     @Binding var showLogin: Bool
     @State private var currentPage = 0
-    @StateObject private var subscriptionManager = SubscriptionManager.shared
     @Environment(\.requestReview) var requestReview
     @State private var hasShownReview = false
     @State private var showPhotoUpload = false
@@ -56,12 +55,6 @@ struct OnboardingView: View {
             subtitle: "Your ratings help us grow!",
             gifName: "wha7_logo",
             isRatingPage: true
-        ),
-        OnboardingPage(
-            title: "Get started",
-            subtitle: "Sign up and get the full suite of features from Wha7",
-            gifName: "features_summary",
-            isLastPage: true
         )
     ]
     
@@ -114,17 +107,6 @@ struct OnboardingView: View {
                                     // Content Area with GIF
                                     if page.isRatingPage {
                                         RatingPageContent()
-                                    } else if page.isLastPage {
-                                        VStack(alignment: .leading, spacing: 40) {
-                                            FeatureRow(icon: "play.square.fill", title: "Insta-Share", description: "Share outfits from Instagram")
-                                            FeatureRow(icon: "tshirt", title: "Virtual Try-On", description: "See how clothes look before you buy")
-                                            FeatureRow(icon: "person.2", title: "AI Consultant", description: "Get personalized style advice")
-                                            FeatureRow(icon: "camera", title: "Photo Analysis", description: "Upload outfits for instant feedback")
-                                            FeatureRow(icon: "arrow.triangle.2.circlepath", title: "Unlimited Access", description: "No restrictions on features")
-                                        }
-                                        .padding(.horizontal)
-                                        
-                                        Spacer()
                                     } else {
                                         // Calculate the scaled height based on the original aspect ratio
                                         let originalAspectRatio = 2097.0 / 967.0
@@ -188,9 +170,6 @@ struct OnboardingView: View {
                 }
             }
             .navigationBarHidden(true)
-        }
-        .task {
-            try? await subscriptionManager.loadProducts()
         }
     }
     
@@ -266,37 +245,6 @@ struct OnboardingView: View {
                     .foregroundColor(.white)
                     .cornerRadius(25)
                     .padding()
-            }
-        } else if page.isLastPage {
-            VStack(spacing: 16) {
-                Button(action: {
-                    Task {
-                        if let product = subscriptionManager.subscriptions.first {
-                            do {
-                                let success = try await subscriptionManager.purchase(product)
-                                if success {
-                                    await userSettings.checkSubscriptionStatus()
-                                    onboardingState.hasSeenOnboarding = true
-                                    showLogin = true
-                                }
-                            } catch {
-                                print("DEBUG: Error purchasing subscription: \(error)")
-                            }
-                        }
-                    }
-                }) {
-                    Text("Get Started for $0.99 per Week")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.black)
-                        .foregroundColor(.white)
-                        .cornerRadius(25)
-                }
-                .padding(.horizontal)
-                
-                LegalFooterView()
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 8)
             }
         } else {
             Button(action: {

@@ -32,29 +32,8 @@ class UserSettings: ObservableObject {
         self.instagramUsername = UserDefaults.standard.string(forKey: "instagramUsername")
         self.isPremium = UserDefaults.standard.bool(forKey: "isPremium")
         self.userBodyImage = UserDefaults.standard.data(forKey: "userBodyImage")
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleSubscriptionChange),
-            name: .subscriptionStatusChanged,
-            object: nil
-        )
-        
-        Task {
-            await checkSubscriptionStatus()
-        }
     }
     
-    @objc private func handleSubscriptionChange() {
-        Task {
-            await checkSubscriptionStatus()
-        }
-    }
-    
-    @MainActor
-    func checkSubscriptionStatus() async {
-        isPremium = SubscriptionManager.shared.isSubscriptionActive
-    }
     
     func clearPhoneNumber() {
         phoneNumber = ""

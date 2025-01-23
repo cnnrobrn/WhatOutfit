@@ -3,7 +3,6 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel = OutfitViewModel()
     @StateObject private var onboardingState = OnboardingState()
-    @StateObject private var subscriptionManager = SubscriptionManager.shared
     @State private var phoneNumber: String = ""
     @EnvironmentObject var userSettings: UserSettings
     @State private var isAuthenticated: Bool = false
@@ -32,9 +31,6 @@ struct ContentView: View {
                 OnboardingView(showLogin: $showLogin)
             } else if isCheckingSubscription {
                 LoadingView()
-                    .task {
-                        await checkSubscriptionStatus()
-                    }
             } else {
                 MainTabView(
                     viewModel: viewModel,
@@ -54,11 +50,5 @@ struct ContentView: View {
                 isCheckingSubscription = true
             }
         }
-    }
-    
-    private func checkSubscriptionStatus() async {
-        try? await subscriptionManager.loadProducts()
-        await userSettings.checkSubscriptionStatus()
-        isCheckingSubscription = false
     }
 }
